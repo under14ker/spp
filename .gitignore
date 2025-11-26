@@ -1,0 +1,70 @@
+# Build results
+bin/
+obj/
+out/
+
+# Rider (JetBrains)
+.idea/
+*.iml
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# VS Code
+.vscode/
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# DotCover
+*.dotCover
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+*.nuget.props
+*.nuget.targets
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.sln.ide
+
+# Publish output
+publish/
+wwwroot/dist/
+wwwroot/node_modules/
+
+# Node.js (если используешь фронтенд)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Test results
+TestResult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# Entity Framework
+Migrations/
+
+# ASP.NET scaffolding
+ScaffoldingReadMe.txt
+
+# Others
+*.dbmdl
+*.bak
+*.sql
+*.sqlite

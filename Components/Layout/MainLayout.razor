@@ -1,0 +1,65 @@
+﻿@namespace ForumClient.Components.Layout
+@inherits LayoutComponentBase
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <a href="https://learn.microsoft.com/aspnet/" target="_blank">О проекте</a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<style>
+    .page {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .sidebar {
+        background-color: #343a40;
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+    }
+
+    main {
+        flex: 1;
+        margin-left: 250px;
+        padding: 20px;
+    }
+
+    .top-row {
+        display: flex;
+        justify-content: flex-end;
+        padding: 8px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    @@media (max-width: 767px) {
+        .sidebar {
+            width: 100%;
+            height: auto;
+            position: relative;
+        }
+
+        main {
+            margin-left: 0;
+        }
+    }
+</style>

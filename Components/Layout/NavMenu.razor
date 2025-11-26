@@ -1,0 +1,50 @@
+﻿@namespace ForumClient.Components.Layout
+
+<nav class="flex-column">
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+            <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Главная
+        </NavLink>
+    </div>
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="/forum">
+            <span class="bi bi-chat-fill-nav-menu" aria-hidden="true"></span> Форум
+        </NavLink>
+    </div>
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="/counter">
+            <span class="bi bi-plus-circle-fill-nav-menu" aria-hidden="true"></span> Счетчик
+        </NavLink>
+    </div>
+</nav>
+
+<style>
+    nav {
+        width: 100%;
+        background-color: #343a40;
+        height: 100%;
+    }
+
+    .nav-item {
+        padding: 10px 0;
+    }
+
+    .nav-link {
+        color: #adb5bd;
+        font-size: 1.1rem;
+        padding-left: 20px;
+        display: block;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+        .nav-link:hover, .nav-link.active {
+            color: #4361ee;
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+
+    .bi {
+        margin-right: 8px;
+        font-size: 1.2rem;
+    }
+</style>

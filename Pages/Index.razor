@@ -1,0 +1,73 @@
+﻿@page "/"
+@using ForumClient.Services
+@using Microsoft.AspNetCore.Components.Forms
+@inject ForumService ForumService
+@inject NavigationManager Nav
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="text-center mb-4">
+                <h1 class="display-4 text-primary">Добро пожаловать на форум</h1>
+                <p class="lead">Войдите, чтобы начать общение</p>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <EditForm Model="@loginModel" OnValidSubmit="Login">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Логин</label>
+                            <InputText @bind-Value="loginModel.Username" class="form-control" id="username" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Пароль</label>
+                            <InputText @bind-Value="loginModel.Password" type="password" class="form-control" id="password" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Войти</button>
+                    </EditForm>
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                    <div class="alert alert-danger mt-3">@ErrorMessage</div>
+                    }
+                </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <p class="text-muted">
+                    Нет аккаунта? <a href="#" @onclick="Register">Зарегистрируйтесь</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private string ErrorMessage = String.Empty;
+
+    private async Task Login()
+    {
+        var token = await ForumService.LoginAsync(loginModel.Username, loginModel.Password);
+        if (token != null)
+            Nav.NavigateTo($"/forum?token={Uri.EscapeDataString(token)}");
+        else
+            ErrorMessage = "Неверный логин или пароль. Попробуйте снова.";
+    }
+
+    private void Register()
+    {
+        Nav.NavigateTo("/register");
+    }
+    
+    public class LoginModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

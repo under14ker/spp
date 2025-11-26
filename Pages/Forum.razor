@@ -1,0 +1,154 @@
+﻿@page "/forum"
+@using ForumClient.Services
+@using ForumClient.Models
+@inject ForumService ForumService
+
+@if (isLoading)
+{
+    <div class="container text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+    </div>
+}
+else if (topics?.Count == 0)
+{
+    <div class="container py-5">
+        <div class="text-center">
+            <h3>Пока нет тем</h3>
+            <p class="text-muted">Создайте первую тему!</p>
+        </div>
+    </div>
+}
+else
+{
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Форум</h2>
+            <a href="#" class="btn btn-outline-primary">+ Новая тема</a>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                @foreach (var topic in topics!)
+                {
+                    <div class="card card-forum">
+                        <div class="card-body">
+                            <h5 class="topic-title">@topic.Title</h5>
+                            <p class="topic-meta">
+                                Автор: <strong>@topic.Author</strong> |
+                                @topic.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                            </p>
+                            <button @onclick="() => TogglePosts(topic.Id)"
+                                    class="btn btn-sm btn-outline-primary">
+                                @(expandedTopicId == topic.Id ? "Скрыть" : "Просмотр")
+                            </button>
+
+                            @if (expandedTopicId == topic.Id && postsByTopic.TryGetValue(topic.Id, out var posts))
+                            {
+                                <div class="mt-3">
+                                    @foreach (var post in posts)
+                                    {
+                                        <div class="post-card">
+                                            <p>@post.Content</p>
+                                            <div class="d-flex justify-content-between">
+                                                <small>Автор: @post.Author</small>
+                                                <small class="text-@(post.IsApproved ? "success" : "warning")">
+                                                    @(post.IsApproved ? "Одобрено" : "На модерации")
+                                                </small>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Информация</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Всего тем: <strong>@topics!.Count</strong></p>
+                        <p>Вы вошли как: <strong>@currentUsername</strong></p>
+                        <button @onclick="Logout" class="btn btn-outline-danger btn-sm">Выйти</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="footer">
+    <div class="container">
+        <p class="text-muted">© 2025 Форум студентов | Курсовой проект</p>
+    </div>
+</div>
+
+@code {
+    private List<TopicDto>? topics;
+    private Dictionary<int, List<PostDto>> postsByTopic = new();
+    private int? expandedTopicId;
+    private bool isLoading = true;
+    private string? token;
+    private string currentUsername = "Пользователь";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Nav.Uri;
+        var query = Nav.ToAbsoluteUri(uri).Query;
+        if (query.Contains("token="))
+        {
+            var tokenPart = query["token=".Length..];
+            token = Uri.UnescapeDataString(tokenPart);
+            await LoadData();
+        }
+        else
+        {
+            Nav.NavigateTo("/");
+        }
+    }
+
+    private async Task LoadData()
+    {
+        if (string.IsNullOrEmpty(token)) return;
+
+        try
+        {
+            topics = await ForumService.GetTopicsAsync(token!);
+            isLoading = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка загрузки: {ex.Message}");
+            isLoading = false;
+        }
+    }
+
+    private async Task TogglePosts(int topicId)
+    {
+        if (expandedTopicId == topicId)
+        {
+            expandedTopicId = null;
+        }
+        else
+        {
+            expandedTopicId = topicId;
+            if (!postsByTopic.ContainsKey(topicId))
+            {
+                var posts = await ForumService.GetPostsAsync(topicId, token!);
+                postsByTopic[topicId] = posts;
+            }
+        }
+    }
+
+    private void Logout()
+    {
+        Nav.NavigateTo("/");
+    }
+
+    [Inject] NavigationManager Nav { get; set; } = default!;
+}
