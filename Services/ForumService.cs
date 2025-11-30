@@ -72,7 +72,7 @@ public class ForumService
         }
         return new();
     }
-    
+
     private string? ExtractUsernameFromToken(string token)
     {
         try
@@ -96,5 +96,54 @@ public class ForumService
             Console.WriteLine($"Ошибка парсинга токена: {ex.Message}");
         }
         return null;
+    }
+    public async Task<bool> CreateTopicAsync(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title) || string.IsNullOrEmpty(_token))
+            return false;
+
+        try
+        {
+            var topic = new { Title = title };
+            var response = await _httpClient.PostAsJsonAsync("api/topics", topic);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> CreatePostAsync(CreatePostDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Content) || string.IsNullOrEmpty(_token))
+            return false;
+
+        try
+        {
+            
+            var response = await _httpClient.PostAsJsonAsync("api/posts", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> ApprovePostAsync(int postId, bool approve)
+    {
+        if (string.IsNullOrEmpty(_token))
+            return false;
+
+        try
+        {
+            var response = await _httpClient.PatchAsync($"api/posts/{postId}/approve?approve={approve}", null);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

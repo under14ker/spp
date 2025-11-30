@@ -1,247 +1,333 @@
 ﻿@page "/forum"
 @using ForumClient.Services
 @using ForumClient.Models
+@using Microsoft.AspNetCore.Components.Forms
 @inject ForumService ForumService
 @inject NavigationManager Nav
 
 @if (isLoading)
 {
-    <div class="container text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Загрузка...</span>
-        </div>
-        <p class="mt-3 text-muted">Загрузка тем...</p>
-    </div>
+	<div class="container text-center py-5">
+		<div class="spinner-border text-primary" role="status">
+			<span class="visually-hidden">Загрузка...</span>
+		</div>
+		<p class="mt-3 text-muted">Загрузка тем...</p>
+	</div>
 }
 else if (!string.IsNullOrEmpty(errorMessage))
 {
-    <div class="container py-5">
-        <div class="alert alert-danger text-center">
-            <h4>Ошибка загрузки</h4>
-            <p>@errorMessage</p>
-            <button @onclick="ReloadData" class="btn btn-outline-danger mt-3">Попробовать снова</button>
-        </div>
-    </div>
+	<div class="container py-5">
+		<div class="alert alert-danger text-center">
+			<h4>Ошибка загрузки</h4>
+			<p>@errorMessage</p>
+			<button onclick="@ReloadData" class="btn btn-outline-danger mt-3">Попробовать снова</button>
+		</div>
+	</div>
 }
 else if (topics == null || topics.Count == 0)
 {
-    <div class="container py-5">
-        <div class="text-center">
-            <h3>Пока нет тем</h3>
-            <p class="text-muted">Создайте первую тему!</p>
-            <div class="mt-4">
-                <button @onclick="CreateTopicModal" class="btn btn-primary">+ Создать тему</button>
-            </div>
-        </div>
-    </div>
+	<div class="container py-5">
+		<div class="text-center">
+			<h3>Пока нет тем</h3>
+			<p class="text-muted">Создайте первую тему!</p>
+			<div class="mt-4">
+				<button onclick="@CreateTopicModal" class="btn btn-primary">+ Создать тему</button>
+			</div>
+		</div>
+	</div>
 }
 else
 {
-    <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Форум</h2>
-            <button @onclick="CreateTopicModal" class="btn btn-outline-primary">+ Новая тема</button>
-        </div>
+	<div class="container py-4">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h2>Форум</h2>
+			<button onclick="@CreateTopicModal" class="btn btn-outline-primary">+ Новая тема</button>
+		</div>
 
-        <div class="row">
-            <div class="col-md-8">
-                @foreach (var topic in topics)
-                {
-                    <div class="card card-forum mb-3">
-                        <div class="card-body">
-                            <h5 class="topic-title">@topic.Title</h5>
-                            <p class="topic-meta">
-                                Автор: <strong>@topic.Author</strong> |
-                                @topic.CreatedAt.ToString("dd MMM yyyy HH:mm")
-                            </p>
-                            <button @onclick="() => TogglePosts(topic.Id)"
-                                    class="btn btn-sm btn-outline-primary">
-                                @(expandedTopicId == topic.Id ? "Скрыть" : "Просмотреть посты")
-                            </button>
+		<div class="row">
+			<div class="col-md-8">
+				@foreach (var topic in topics)
+				{
+					<div class="card card-forum mb-3">
+						<div class="card-body">
+							<h5 class="topic-title">@topic.Title</h5>
+							<p class="topic-meta">
+								Автор: <strong>@topic.Author</strong> |
+								@topic.CreatedAt.ToString("dd MMM yyyy HH:mm")
+							</p>
+							<div style="display: flex">
+								<button onclick="@(() => TogglePosts(topic.Id))"
+										class="btn btn-sm btn-outline-primary">
+									@(expandedTopicId == topic.Id ? "Скрыть" : "Просмотреть посты")
+								</button>
+								<button class="btn btn-sm btn-outline-success ms-2"
+										onclick="@(() => ShowPostForm(topic.Id))">
+									✏️ Добавить пост
+								</button>
+							</div>
+							@if (activePostFormTopicId != null && activePostFormTopicId == topic.Id)
+							{
+								<div class="mt-3 border rounded p-3 bg-light">
+									<h6>Новый пост</h6>
+									<div class="mb-2">
+										<InputText class="form-control" placeholder="Заголовок"
+												   @bind-Value="newPostTitle" />
+									</div>
+									<div class="mb-2">
+										<InputTextArea class="form-control" rows="3" placeholder="Содержание"
+													   @bind-Value="newPostContent" />
+									</div>
+									<div class="d-flex justify-content-end">
+										<button class="btn btn-primary me-2"
+												disabled="@isSubmittingPost"
+												onclick="@(() => SubmitPost(topic.Id))">
+											📨 Отправить
+										</button>
+										<button class="btn btn-secondary"
+												onclick="@(() => CancelPost)">
+											❌ Отмена
+										</button>
+									</div>
+								</div>
+							}
+							@if (expandedTopicId == topic.Id && postsByTopic.TryGetValue(topic.Id, out var posts) && posts != null)
+							{
+								<div class="mt-3">
+									@if (posts.Count == 0)
+									{
+										<p class="text-muted">В этой теме пока нет сообщений.</p>
+									}
+									else
+									{
+										@foreach (var post in posts)
+										{
+											<div class="post-card mb-2">
+												<p>@post.Title</p>
+												<div class="d-flex justify-content-between">
+													<small>Автор: @post.Author</small>
+													<small class="text-@(post.IsApproved ? "success" : "warning")">
+														@(post.IsApproved ? "✅ Одобрено" : "⏳ На модерации")
+													</small>
+												</div>
+											</div>
+										}
+									}
+								</div>
+							}
+						</div>
+					</div>
+				}
+			</div>
 
-                            @if (expandedTopicId == topicId && postsByTopic.TryGetValue(topic.Id, out var posts) && posts != null)
-                            {
-                                <div class="mt-3">
-                                    @if (posts.Count == 0)
-                                    {
-                                        <p class="text-muted">В этой теме пока нет сообщений.</p>
-                                    }
-                                    else
-                                    {
-                                        @foreach (var post in posts)
-                                        {
-                                            <div class="post-card mb-2">
-                                                <p>@post.Content</p>
-                                                <div class="d-flex justify-content-between">
-                                                    <small>Автор: @post.Author</small>
-                                                    <small class="text-@(post.IsApproved ? "success" : "warning")">
-                                                        @(post.IsApproved ? "✅ Одобрено" : "⏳ На модерации")
-                                                    </small>
-                                                </div>
-                                            </div>
-                                        }
-                                    }
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <div class="col-md-4">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Информация</h5>
-                    </div>
-                    <div class="card-body">
-                        <p>Всего тем: <strong>@(topics?.Count ?? 0)</strong></p>
-                        <p>Всего постов: <strong>@(GetTotalPosts())</strong></p>
-                        <p>Вы вошли как: <strong>@currentUsername</strong></p>
-                        <button @onclick="Logout" class="btn btn-outline-danger btn-sm w-100 mt-3">Выйти</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+			<div class="col-md-4">
+				<div class="card shadow-sm">
+					<div class="card-header bg-primary text-white">
+						<h5 class="mb-0">Информация</h5>
+					</div>
+					<div class="card-body">
+						<p>Всего тем: <strong>@(topics?.Count ?? 0)</strong></p>
+						<p>Всего постов: <strong>@(GetTotalPosts())</strong></p>
+						<p>Вы вошли как: <strong>@currentUsername</strong></p>
+						<button onclick="@Logout" class="btn btn-outline-danger btn-sm w-100 mt-3">Выйти</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 }
 
 <div class="footer mt-5 py-4 bg-light">
-    <div class="container">
-        <p class="text-center text-muted mb-0">© 2025 Форум студентов | Курсовой проект</p>
-    </div>
+	<div class="container">
+		<p class="text-center text-muted mb-0">© 2025 Форум студентов | Курсовой проект</p>
+	</div>
 </div>
 
 @code {
-    private List<TopicDto>? topics;
-    private Dictionary<int, List<PostDto>?> postsByTopic = new();
-    private int? expandedTopicId;
-    private bool isLoading = true;
-    private string currentUsername = "Гость";
-    private string? errorMessage;
-    private int topicId;
+	private List<TopicDto>? topics;
+	private Dictionary<int, List<PostDto>?> postsByTopic = new();
+	private int? expandedTopicId;
+	private bool isLoading = true;
+	private string currentUsername = "Гость";
+	private string? errorMessage;
 
-    protected override async Task OnInitializedAsync()
-    {
-        Console.WriteLine("=== Начало инициализации страницы форума ===");
+	private int? activePostFormTopicId = null;
+	private string newPostTitle = string.Empty;
+	private string newPostContent = string.Empty;
+	private bool isSubmittingPost = false;
 
-        // Проверяем, авторизован ли пользователь
-        if (ForumService.IsLoggedIn)
-        {
-            currentUsername = ForumService.CurrentUsername ?? "Пользователь";
-            await LoadData();
-        }
-        else
-        {
-            errorMessage = "Вы не авторизованы. Пожалуйста, войдите в систему.";
-            isLoading = false;
-        }
+	protected override async Task OnInitializedAsync()
+	{
+		Console.WriteLine("=== Начало инициализации страницы форума ===");
 
-        Console.WriteLine("=== Инициализация завершена ===");
-    }
+		// Проверяем, авторизован ли пользователь
+		if (ForumService.IsLoggedIn)
+		{
+			currentUsername = ForumService.CurrentUsername ?? "Пользователь";
+			await LoadData();
+		}
+		else
+		{
+			errorMessage = "Вы не авторизованы. Пожалуйста, войдите в систему.";
+			isLoading = false;
+		}
+
+		Console.WriteLine("=== Инициализация завершена ===");
+	}
 
 
-    private async Task LoadData()
-    {
-        Console.WriteLine("🔄 Начало загрузки данных...");
+	private async Task LoadData()
+	{
+		Console.WriteLine("🔄 Начало загрузки данных...");
 
-        try
-        {
-            topics = await ForumService.GetTopicsAsync();
-            Console.WriteLine($"✅ Получено тем: {topics?.Count ?? 0}");
+		try
+		{
+			topics = await ForumService.GetTopicsAsync();
+			Console.WriteLine($"✅ Получено тем: {topics?.Count ?? 0}");
 
-            if (topics != null && topics.Count > 0)
-            {
-                foreach (var topic in topics)
-                {
-                    postsByTopic[topic.Id] = null;
-                }
-                errorMessage = null;
-            }
-            else
-            {
-                errorMessage = "На форуме пока нет тем. Будьте первым, кто создаст тему!";
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Ошибка: {ex.Message}");
-            errorMessage = $"Не удалось загрузить данные форума: {ex.Message}";
-            topics = new List<TopicDto>();
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
+			if (topics != null && topics.Count > 0)
+			{
+				foreach (var topic in topics)
+				{
+					postsByTopic[topic.Id] = null;
+				}
+				errorMessage = null;
+			}
+			else
+			{
+				errorMessage = "На форуме пока нет тем. Будьте первым, кто создаст тему!";
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"❌ Ошибка: {ex.Message}");
+			errorMessage = $"Не удалось загрузить данные форума: {ex.Message}";
+			topics = new List<TopicDto>();
+		}
+		finally
+		{
+			isLoading = false;
+		}
+	}
 
-    private async Task TogglePosts(int topicId)
-    {
-        Console.WriteLine($".TogglePosts вызван для темы ID: {topicId}");
+	private async Task TogglePosts(int topicId)
+	{
+		Console.WriteLine($".TogglePosts вызван для темы ID: {topicId}");
 
-        if (expandedTopicId == topicId)
-        {
-            expandedTopicId = null;
-            Console.WriteLine("🔒 Тема свернута");
-        }
-        else
-        {
-            expandedTopicId = topicId;
-            this.topicId = topicId;
+		if (expandedTopicId == topicId)
+		{
+			expandedTopicId = null;
+			Console.WriteLine("🔒 Тема свернута");
+		}
+		else
+		{
+			expandedTopicId = topicId;
 
-            if (!postsByTopic.ContainsKey(topicId) || postsByTopic[topicId] == null)
-            {
-                Console.WriteLine($"⏳ Загрузка постов для темы ID: {topicId}");
+			Console.WriteLine($"⏳ Загрузка постов для темы ID: {topicId}");
 
-                try
-                {
-                    var posts = await ForumService.GetPostsAsync(topicId);
-                    postsByTopic[topicId] = posts;
-                    Console.WriteLine($"✅ Загружено постов: {posts?.Count ?? 0}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"❌ Ошибка загрузки постов: {ex.Message}");
-                    postsByTopic[topicId] = new List<PostDto>();
-                    errorMessage = "Ошибка при загрузке постов. Попробуйте позже.";
-                }
-            }
-            else
-            {
-                Console.WriteLine("✅ Посты уже загружены");
-            }
-        }
-    }
+			try
+			{
+				var posts = await ForumService.GetPostsAsync(topicId);
+				postsByTopic[topicId] = posts;
+				Console.WriteLine($"✅ Загружено постов: {posts?.Count ?? 0}");
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"❌ Ошибка загрузки постов: {ex.Message}");
+				postsByTopic[topicId] = new List<PostDto>();
+				errorMessage = "Ошибка при загрузке постов. Попробуйте позже.";
+			}
+		}
+		StateHasChanged();
+	}
 
-    private void Logout()
-    {
-        ForumService.Logout();
-        Nav.NavigateTo("/");
-    }
+	private async Task SubmitPost(int topicId)
+	{
+		if (string.IsNullOrWhiteSpace(newPostTitle) || string.IsNullOrWhiteSpace(newPostContent))
+		{
+			errorMessage = "Пожалуйста, заполните все поля.";
+			return;
+		}
 
-    private void CreateTopicModal()
-    {
-        Console.WriteLine("➕ Попытка создания новой темы");
-        errorMessage = "Создание тем пока недоступно в демо-версии";
-    }
+		isSubmittingPost = true;
+		errorMessage = null;
 
-    private void ReloadData()
-    {
-        Console.WriteLine("🔄 Перезагрузка данных");
-        isLoading = true;
-        errorMessage = null;
-        LoadData();
-    }
+		try
+		{
+			var dto = new CreatePostDto
+			{
+				TopicId = topicId,
+				Title = newPostTitle,
+				Content = newPostContent
+			};
 
-    private int GetTotalPosts()
-    {
-        int total = 0;
-        foreach (var posts in postsByTopic.Values)
-        {
-            if (posts != null)
-            {
-                total += posts.Count;
-            }
-        }
-        return total;
-    }
+			await ForumService.CreatePostAsync(dto);
+			Console.WriteLine("✅ Пост успешно создан");
+
+			// Обновляем посты
+			var posts = await ForumService.GetPostsAsync(topicId);
+			postsByTopic[topicId] = posts;
+
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"❌ Ошибка при создании поста: {ex.Message}");
+			errorMessage = "Не удалось создать пост. Попробуйте позже.";
+		}
+		finally
+		{
+			isSubmittingPost = false;
+			activePostFormTopicId = null;
+			StateHasChanged();
+		}
+
+	}
+	private void CancelPost()
+	{
+		activePostFormTopicId = null;
+		errorMessage = null;
+		StateHasChanged();
+	}
+
+	private void ShowPostForm(int topicId)
+	{
+		activePostFormTopicId = topicId;
+		newPostTitle = string.Empty;
+		newPostContent = string.Empty;
+		errorMessage = null;
+		StateHasChanged();
+	}
+
+
+	private void Logout()
+	{
+		ForumService.Logout();
+		Nav.NavigateTo("/");
+	}
+
+	private void CreateTopicModal()
+	{
+		Console.WriteLine("➕ Попытка создания новой темы");
+		errorMessage = "Создание тем пока недоступно в демо-версии";
+	}
+
+	private void ReloadData()
+	{
+		Console.WriteLine("🔄 Перезагрузка данных");
+		isLoading = true;
+		errorMessage = null;
+		LoadData();
+	}
+
+	private int GetTotalPosts()
+	{
+		int total = 0;
+		foreach (var posts in postsByTopic.Values)
+		{
+			if (posts != null)
+			{
+				total += posts.Count;
+			}
+		}
+		return total;
+	}
 }
