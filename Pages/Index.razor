@@ -51,11 +51,15 @@
     private LoginModel loginModel = new();
     private string ErrorMessage = String.Empty;
 
+   
     private async Task Login()
     {
-        var token = await ForumService.LoginAsync(loginModel.Username, loginModel.Password);
-        if (token != null)
-            Nav.NavigateTo($"/forum?token={Uri.EscapeDataString(token)}");
+        var success = await ForumService.LoginAsync(loginModel.Username, loginModel.Password);
+        if (success)
+        {
+            // токен уже сохранён в ForumService, имя пользователя тоже
+            Nav.NavigateTo("/forum");
+        }
         else
             ErrorMessage = "Неверный логин или пароль. Попробуйте снова.";
     }
