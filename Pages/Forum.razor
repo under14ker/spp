@@ -139,34 +139,6 @@ else
         Console.WriteLine("=== Инициализация завершена ===");
     }
 
-    private string GetUsernameFromToken(string token)
-    {
-        try
-        {
-            var tokenParts = token.Split('.');
-            if (tokenParts.Length >= 2)
-            {
-                var payload = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(tokenParts[1]));
-                Console.WriteLine($".Payload: {payload}");
-
-                // Простой парсинг JSON (для демонстрации)
-                if (payload.Contains("\"unique_name\":\""))
-                {
-                    var start = payload.IndexOf("\"unique_name\":\"") + 16;
-                    var end = payload.IndexOf("\"", start);
-                    if (end > start)
-                    {
-                        return payload.Substring(start, end - start);
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка при парсинге токена: {ex.Message}");
-        }
-        return "Пользователь";
-    }
 
     private async Task LoadData()
     {
