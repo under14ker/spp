@@ -5,11 +5,11 @@ namespace ForumClient.Services;
 
 public class ForumService
 {
-    private readonly HttpClient _http;
+    private readonly HttpClient _httpClient;
 
-    public ForumService(HttpClient http)
+    public ForumService(HttpClient httpClient)
     {
-        _http = http;
+        _httpClient = httpClient;
     }
 
     public async Task<string?> LoginAsync(string username, string password)
@@ -17,7 +17,7 @@ public class ForumService
         var request = new LoginRequest { Username = username, Password = password };
         try
         {
-            var response = await _http.PostAsJsonAsync("api/auth/login", request);
+            var response = await _httpClient.PostAsJsonAsync("api/auth/login", request);
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
@@ -30,13 +30,29 @@ public class ForumService
 
     public async Task<List<TopicDto>> GetTopicsAsync(string token)
     {
-        _http.DefaultRequestHeaders.Authorization = new("Bearer", token);
-        return await _http.GetFromJsonAsync<List<TopicDto>>("api/topics") ?? new();
+        var request = new HttpRequestMessage(HttpMethod.Get, "api/topics");
+        request.Headers.Authorization = new("Bearer", token);
+
+        var response = await _httpClient.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            var topics = await response.Content.ReadFromJsonAsync<List<TopicDto>>();
+            return topics ?? new();
+        }
+        return new();
     }
 
     public async Task<List<PostDto>> GetPostsAsync(int topicId, string token)
     {
-        _http.DefaultRequestHeaders.Authorization = new("Bearer", token);
-        return await _http.GetFromJsonAsync<List<PostDto>>($"api/posts?topicId={topicId}") ?? new();
+        var request = new HttpRequestMessage(HttpMethod.Get, $"api/posts?topicId={topicId}");
+        request.Headers.Authorization = new("Bearer", token);
+
+        var response = await _httpClient.SendAsync(request);
+        if (response.IsSuccessStatusCode)
+        {
+            var posts = await response.Content.ReadFromJsonAsync<List<PostDto>>();
+            return posts ?? new();
+        }
+        return new();
     }
 }
